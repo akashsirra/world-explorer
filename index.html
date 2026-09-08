@@ -1,1 +1,53 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#061018"><meta name="description" content="World Explorer — a weather and day/night driven exploration game."><link rel="manifest" href="/manifest.webmanifest"><title>World Explorer</title><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""><link rel="stylesheet" href="/style.css"></head><body><div id="map"></div><div class="shade day" id="shade"></div><header class="top"><label class="search"><span>⌕</span><input id="search" placeholder="Explore your world" autocomplete="off"></label><button class="glass" id="loc" aria-label="Locate me">◉</button></header><aside class="side"><button class="tool" id="center" aria-label="Center">⌖</button><button class="tool" id="refresh" aria-label="Reshuffle discoveries">◌</button><button class="tool" id="weather" aria-label="Weather">☁</button><button class="tool" id="toggle" aria-label="Day night">☾</button></aside><div class="toast" id="toast"></div><section class="hud"><div class="handle"></div><div class="stats"><div><div class="eyebrow">YOUR WORLD</div><div class="percent"><span id="pct">0</span>% explored</div></div><div class="near"><div class="eyebrow">NEARBY</div><b id="near">0 <small>✦</small></b></div></div><div class="progress"><i id="bar"></i></div><div class="chips"><button class="chip scan" id="scan">✦ Scan</button><div class="chip" id="disc">✦ 0 discoveries</div><div class="chip">🧭 Explorer</div><div class="chip" id="quest">🎯 Find 3 discoveries</div><div class="chip" id="wx">☁ Loading</div></div><nav class="nav"><button class="nav-btn active" data-tab="map"><span>🗺️</span>Map</button><button class="nav-btn" data-tab="discover"><span>✨</span>Discover</button><button class="nav-btn" data-tab="memories"><span>📸</span>Memories</button><button class="nav-btn" data-tab="profile"><span>🏆</span>Profile</button></nav></section><div class="sheet" id="sheet"><section class="panel"><div class="head"><h2 id="title">Discover</h2><button class="close" id="close">×</button></div><div id="body"></div></section></div><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script><script src="/app.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#061018">
+<meta name="description" content="World Explorer — a real-world exploration game driven by your location, weather and time.">
+<link rel="manifest" href="/manifest.webmanifest">
+<title>World Explorer</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous">
+<link rel="stylesheet" href="/style.css?v=4">
+</head>
+<body>
+<div id="map"></div>
+<div class="map-loading" id="mapLoading"><span></span><b>Loading your world…</b></div>
+<div class="shade day" id="shade"></div>
+<header class="top">
+<label class="search"><span>⌕</span><input id="search" placeholder="Explore your world" autocomplete="off"></label>
+<button class="glass" id="loc" aria-label="Locate me">◉</button>
+</header>
+<aside class="side">
+<button class="tool" id="center" aria-label="Center">⌖</button>
+<button class="tool" id="refresh" aria-label="Reshuffle discoveries">◌</button>
+<button class="tool" id="weather" aria-label="Weather">☁</button>
+<button class="tool" id="toggle" aria-label="Day night">☾</button>
+</aside>
+<div class="toast" id="toast"></div>
+<section class="hud">
+<div class="handle"></div>
+<div class="stats"><div><div class="eyebrow">YOUR WORLD</div><div class="percent"><span id="pct">0</span>% explored</div></div><div class="near"><div class="eyebrow">NEARBY</div><b id="near">0 <small>✦</small></b></div></div>
+<div class="progress"><i id="bar"></i></div>
+<div class="chips">
+<button class="chip scan" id="scan">✦ Scan</button>
+<div class="chip" id="disc">✦ 0 discoveries</div>
+<div class="chip">🧭 Explorer</div>
+<div class="chip" id="quest">🎯 Find 3 discoveries</div>
+<div class="chip" id="wx">☁ Loading</div>
+</div>
+<nav class="nav">
+<button class="nav-btn active" data-tab="map"><span>🗺️</span>Map</button>
+<button class="nav-btn" data-tab="discover"><span>✨</span>Discover</button>
+<button class="nav-btn" data-tab="memories"><span>📸</span>Memories</button>
+<button class="nav-btn" data-tab="profile"><span>🏆</span>Profile</button>
+</nav>
+</section>
+<div class="sheet" id="sheet"><section class="panel"><div class="head"><h2 id="title">Discover</h2><button class="close" id="close">×</button></div><div id="body"></div></section></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"></script>
+<script src="/app.js?v=4"></script>
+<script>
+if ('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=4').catch(()=>{}));
+</script>
+</body>
+</html>
