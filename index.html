@@ -7,8 +7,8 @@
 <meta name="description" content="World Explorer — a real-world exploration game driven by your location, weather and time.">
 <link rel="manifest" href="/manifest.webmanifest">
 <title>World Explorer</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="/style.css?v=7">
+<link rel="stylesheet" href="/vendor/leaflet.css">
+<link rel="stylesheet" href="/style.css?v=8">
 </head>
 <body>
 <div id="map"></div>
@@ -44,36 +44,11 @@
 </nav>
 </section>
 <div class="sheet" id="sheet"><section class="panel"><div class="head"><h2 id="title">Discover</h2><button class="close" id="close">×</button></div><div id="body"></div></section></div>
-<script>
-(function(){
-  const sources=[
-    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-    'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js'
-  ];
-  function start(){
-    if(window.__worldExplorerStarted)return;
-    window.__worldExplorerStarted=true;
-    const s=document.createElement('script');
-    s.src='/app.js?v=7';
-    s.onload=()=>document.getElementById('mapLoading')?.classList.add('hidden');
-    s.onerror=()=>{const l=document.getElementById('mapLoading');if(l)l.innerHTML='<b>World Explorer could not start. Please reload.</b>';};
-    document.body.appendChild(s);
-  }
-  function load(i=0){
-    if(window.L)return start();
-    if(i>=sources.length){const l=document.getElementById('mapLoading');if(l)l.innerHTML='<b>Map engine unavailable. Please reload once.</b>';return;}
-    const s=document.createElement('script');
-    s.src=sources[i];
-    s.onload=start;
-    s.onerror=()=>{s.remove();load(i+1)};
-    document.head.appendChild(s);
-  }
-  load();
-})();
-</script>
+<script src="/vendor/leaflet.js"></script>
+<script src="/app.js?v=8"></script>
 <script>
 if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=7').catch(()=>{}));
+  window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=8').catch(()=>{}));
 }
 </script>
 </body>
