@@ -7,8 +7,8 @@
 <meta name="description" content="World Explorer — a real-world exploration game driven by your location, weather and time.">
 <link rel="manifest" href="/manifest.webmanifest">
 <title>World Explorer</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous" onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css'">
-<link rel="stylesheet" href="/style.css?v=5">
+<link rel="stylesheet" href="/vendor/leaflet.css?v=6">
+<link rel="stylesheet" href="/style.css?v=6">
 </head>
 <body>
 <div id="map"></div>
@@ -46,41 +46,36 @@
 <div class="sheet" id="sheet"><section class="panel"><div class="head"><h2 id="title">Discover</h2><button class="close" id="close">×</button></div><div id="body"></div></section></div>
 <script>
 (function(){
-  const app='/app.js?v=5';
-  function loadApp(){
+  function startApp(){
     if(window.__worldExplorerAppLoading)return;
     window.__worldExplorerAppLoading=true;
     const s=document.createElement('script');
-    s.src=app;
+    s.src='/app.js?v=6';
+    s.onload=function(){ document.getElementById('mapLoading')?.classList.add('hidden'); };
     s.onerror=function(){
       const l=document.getElementById('mapLoading');
       if(l)l.innerHTML='<b>World Explorer could not start. Please reload.</b>';
     };
     document.body.appendChild(s);
   }
-  function loadLeaflet(primary,fallback){
+  function loadLeaflet(urls,i=0){
+    if(window.L)return startApp();
+    if(i>=urls.length){
+      const l=document.getElementById('mapLoading');
+      if(l)l.innerHTML='<b>Map engine unavailable. Please reload once.</b>';
+      return;
+    }
     const s=document.createElement('script');
-    s.src=primary;
-    s.crossOrigin='anonymous';
-    s.onload=loadApp;
-    s.onerror=function(){
-      const f=document.createElement('script');
-      f.src=fallback;
-      f.crossOrigin='anonymous';
-      f.onload=loadApp;
-      f.onerror=function(){
-        const l=document.getElementById('mapLoading');
-        if(l)l.innerHTML='<b>Map service unavailable. Check your connection and reload.</b>';
-      };
-      document.head.appendChild(f);
-    };
+    s.src=urls[i];
+    s.onload=startApp;
+    s.onerror=function(){s.remove();loadLeaflet(urls,i+1)};
     document.head.appendChild(s);
   }
-  loadLeaflet('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js','https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js');
+  loadLeaflet(['/vendor/leaflet.js?v=6','https://unpkg.com/leaflet@1.9.4/dist/leaflet.js','https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js']);
 })();
 </script>
 <script>
-if ('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=5').catch(()=>{}));
+if ('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=6').catch(()=>{}));
 </script>
 </body>
 </html>
