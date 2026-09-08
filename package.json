@@ -1,0 +1,12 @@
+{
+  "name": "world-explorer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "World Explorer — a weather and time driven real-world exploration game",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "leaflet": "1.9.4"
+  }
+}
