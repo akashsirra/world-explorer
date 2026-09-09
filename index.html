@@ -7,8 +7,8 @@
 <meta name="description" content="World Explorer — a real-world exploration game driven by your location, weather and time.">
 <link rel="manifest" href="/manifest.webmanifest">
 <title>World Explorer</title>
-<link rel="stylesheet" href="/vendor/leaflet.css">
-<link rel="stylesheet" href="/style.css?v=8">
+<link rel="stylesheet" href="/vendor/leaflet.css?v=9">
+<link rel="stylesheet" href="/style.css?v=9">
 </head>
 <body>
 <div id="map"></div>
@@ -44,11 +44,11 @@
 </nav>
 </section>
 <div class="sheet" id="sheet"><section class="panel"><div class="head"><h2 id="title">Discover</h2><button class="close" id="close">×</button></div><div id="body"></div></section></div>
-<script src="/vendor/leaflet.js"></script>
-<script src="/app.js?v=8"></script>
+<script src="/vendor/leaflet.js?v=9"></script>
+<script src="/app.js?v=9"></script>
 <script>
 if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=8').catch(()=>{}));
+  window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=9').catch(()=>{}));
 }
 </script>
 </body>
