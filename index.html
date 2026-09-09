@@ -7,8 +7,8 @@
 <meta name="description" content="World Explorer — a real-world exploration game driven by your location, weather and time.">
 <link rel="manifest" href="/manifest.webmanifest">
 <title>World Explorer</title>
-<link rel="stylesheet" href="/vendor/leaflet.css?v=10" onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css'">
-<link rel="stylesheet" href="/style.css?v=10">
+<link rel="stylesheet" href="/vendor/leaflet.css?v=11" onerror="this.onerror=null;this.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css'">
+<link rel="stylesheet" href="/style.css?v=11">
 </head>
 <body>
 <div id="map"></div>
@@ -46,35 +46,44 @@
 <div class="sheet" id="sheet"><section class="panel"><div class="head"><h2 id="title">Discover</h2><button class="close" id="close">×</button></div><div id="body"></div></section></div>
 <script>
 (() => {
-  const version = '10';
-  const cdn = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js';
+  const version = '11';
+  const cdns = [
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js',
+    'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js',
+    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+  ];
+  let started = false;
   const fail = () => {
     const box = document.getElementById('mapLoading');
-    if (box) box.innerHTML = '<b>Map engine failed to load. Refresh once to retry.</b>';
+    if (box) box.innerHTML = '<b>Map engine failed to load. Tap refresh once to retry.</b>';
   };
   const start = () => {
+    if (started || !window.L) return;
+    started = true;
     const app = document.createElement('script');
     app.src = '/app.js?v=' + version;
     app.onerror = fail;
     document.body.appendChild(app);
   };
-  const loadCdn = () => {
-    const leaflet = document.createElement('script');
-    leaflet.src = cdn;
-    leaflet.onload = start;
-    leaflet.onerror = fail;
-    document.head.appendChild(leaflet);
+  const loadCdn = (i = 0) => {
+    if (window.L) return start();
+    if (i >= cdns.length) return fail();
+    const script = document.createElement('script');
+    script.src = cdns[i];
+    script.onload = start;
+    script.onerror = () => loadCdn(i + 1);
+    document.head.appendChild(script);
   };
   const local = document.createElement('script');
   local.src = '/vendor/leaflet.js?v=' + version;
   local.onload = start;
-  local.onerror = loadCdn;
+  local.onerror = () => loadCdn();
   document.head.appendChild(local);
 })();
 </script>
 <script>
 if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=10').catch(()=>{}));
+  window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=11').catch(()=>{}));
 }
 </script>
 </body>
