@@ -7,8 +7,8 @@
 <meta name="description" content="World Explorer — a real-world exploration game driven by your location, weather and time.">
 <link rel="manifest" href="/manifest.webmanifest">
 <title>World Explorer</title>
-<link rel="stylesheet" href="/vendor/leaflet.css?v=9">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/vendor/leaflet.css?v=10" onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css'">
+<link rel="stylesheet" href="/style.css?v=10">
 </head>
 <body>
 <div id="map"></div>
@@ -44,11 +44,37 @@
 </nav>
 </section>
 <div class="sheet" id="sheet"><section class="panel"><div class="head"><h2 id="title">Discover</h2><button class="close" id="close">×</button></div><div id="body"></div></section></div>
-<script src="/vendor/leaflet.js?v=9"></script>
-<script src="/app.js?v=9"></script>
+<script>
+(() => {
+  const version = '10';
+  const cdn = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js';
+  const fail = () => {
+    const box = document.getElementById('mapLoading');
+    if (box) box.innerHTML = '<b>Map engine failed to load. Refresh once to retry.</b>';
+  };
+  const start = () => {
+    const app = document.createElement('script');
+    app.src = '/app.js?v=' + version;
+    app.onerror = fail;
+    document.body.appendChild(app);
+  };
+  const loadCdn = () => {
+    const leaflet = document.createElement('script');
+    leaflet.src = cdn;
+    leaflet.onload = start;
+    leaflet.onerror = fail;
+    document.head.appendChild(leaflet);
+  };
+  const local = document.createElement('script');
+  local.src = '/vendor/leaflet.js?v=' + version;
+  local.onload = start;
+  local.onerror = loadCdn;
+  document.head.appendChild(local);
+})();
+</script>
 <script>
 if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=9').catch(()=>{}));
+  window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=10').catch(()=>{}));
 }
 </script>
 </body>
