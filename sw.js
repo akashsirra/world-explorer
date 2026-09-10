@@ -1,6 +1,6 @@
-const CACHE = 'world-explorer-v22';
-const CORE = ['/', '/index.html', '/style.css?v=22', '/ui-overrides.css?v=22', '/weather.css?v=22', '/app.js?v=22', '/mobile-engine.js?v=22', '/radar-visibility.js?v=22', '/hud-toggle.js?v=22', '/weather-engine.js?v=22', '/manifest.webmanifest', '/vendor/leaflet.js', '/vendor/leaflet.css'];
-const NO_CACHE = ['/app.js', '/style.css', '/ui-overrides.css', '/weather.css', '/mobile-engine.js', '/radar-visibility.js', '/hud-toggle.js', '/weather-engine.js', '/index.html', '/sw.js'];
+const CACHE = 'world-explorer-v23';
+const CORE = ['/', '/index.html', '/style.css?v=23', '/ui-overrides.css?v=23', '/weather.css?v=23', '/app.js?v=23', '/mobile-engine.js?v=23', '/radar-visibility.js?v=23', '/hud-toggle.js?v=23', '/signal-polish.js?v=23', '/weather-engine.js?v=23', '/manifest.webmanifest', '/vendor/leaflet.js', '/vendor/leaflet.css'];
+const NO_CACHE = ['/app.js', '/style.css', '/ui-overrides.css', '/weather.css', '/mobile-engine.js', '/radar-visibility.js', '/hud-toggle.js', '/signal-polish.js', '/weather-engine.js', '/index.html', '/sw.js'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(async cache => {
