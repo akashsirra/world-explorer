@@ -1,6 +1,6 @@
-const CACHE = 'world-explorer-v27';
-const CORE = ['/', '/index.html', '/style.css?v=27', '/ui-overrides.css?v=27', '/weather.css?v=27', '/app.js?v=27', '/movement-engine.js?v=27', '/mobile-engine.js?v=27', '/radar-visibility.js?v=27', '/hud-toggle.js?v=27', '/signal-polish.js?v=27', '/weather-engine.js?v=27', '/manifest.webmanifest', '/vendor/leaflet.js', '/vendor/leaflet.css'];
-const NO_CACHE = ['/app.js', '/style.css', '/ui-overrides.css', '/weather.css', '/movement-engine.js', '/mobile-engine.js', '/radar-visibility.js', '/hud-toggle.js', '/signal-polish.js', '/weather-engine.js', '/index.html', '/sw.js'];
+const CACHE = 'world-explorer-v28';
+const CORE = ['/', '/index.html', '/style.css?v=28', '/ui-overrides.css?v=28', '/weather.css?v=28', '/app.js?v=28', '/movement-engine.js?v=28', '/mobile-engine.js?v=28', '/radar-visibility.js?v=28', '/hud-toggle.js?v=28', '/signal-polish.js?v=28', '/weather-engine.js?v=28', '/world-events.js?v=28', '/manifest.webmanifest', '/vendor/leaflet.js', '/vendor/leaflet.css'];
+const NO_CACHE = ['/app.js', '/style.css', '/ui-overrides.css', '/weather.css', '/movement-engine.js', '/mobile-engine.js', '/radar-visibility.js', '/hud-toggle.js', '/signal-polish.js', '/weather-engine.js', '/world-events.js', '/index.html', '/sw.js'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(async cache => {
     for (const url of CORE) { try { const r=await fetch(url,{cache:'no-store'}); if(r.ok) await cache.put(url,r); } catch(_){} }
