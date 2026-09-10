@@ -8,7 +8,8 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <title>World Explorer</title>
 <link rel="stylesheet" href="/vendor/leaflet.css">
-<link rel="stylesheet" href="/style.css?v=13">
+<link rel="stylesheet" href="/style.css?v=14">
+<link rel="stylesheet" href="/ui-overrides.css?v=14">
 </head>
 <body>
 <div id="map"></div>
@@ -47,7 +48,7 @@
 <script src="/vendor/leaflet.js"></script>
 <script>
 (() => {
-  const version = '13';
+  const version = '14';
   const start = () => {
     if (!window.L || window.__WORLD_EXPLORER_STARTED__) return;
     window.__WORLD_EXPLORER_STARTED__ = true;
