@@ -1,6 +1,6 @@
-const CACHE = 'world-explorer-v16';
-const CORE = ['/', '/index.html', '/style.css?v=16', '/ui-overrides.css?v=16', '/app.js?v=16', '/mobile-engine.js?v=16', '/manifest.webmanifest', '/vendor/leaflet.js', '/vendor/leaflet.css'];
-const NO_CACHE = ['/app.js', '/style.css', '/ui-overrides.css', '/mobile-engine.js', '/index.html', '/sw.js'];
+const CACHE = 'world-explorer-v17';
+const CORE = ['/', '/index.html', '/style.css?v=17', '/ui-overrides.css?v=17', '/app.js?v=17', '/mobile-engine.js?v=17', '/radar-visibility.js?v=17', '/manifest.webmanifest', '/vendor/leaflet.js', '/vendor/leaflet.css'];
+const NO_CACHE = ['/app.js', '/style.css', '/ui-overrides.css', '/mobile-engine.js', '/radar-visibility.js', '/index.html', '/sw.js'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(async cache => {
