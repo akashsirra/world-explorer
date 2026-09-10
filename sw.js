@@ -1,26 +1,69 @@
-const CACHE='world-explorer-v12';
-const CORE=['/','/index.html','/style.css?v=12','/app.js?v=12','/manifest.webmanifest'];
-const NO_CACHE=['/app.js','/style.css','/index.html','/sw.js'];
-self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(async c=>{for(const url of CORE){try{const r=await fetch(url,{cache:'no-store'});if(r.ok)await c.put(url,r)}catch{}}}).then(()=>self.skipWaiting())));
-self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
-self.addEventListener('fetch',event=>{
-  if(event.request.method!=='GET')return;
-  const u=new URL(event.request.url);
-  if(u.origin!==location.origin)return;
-  const path=u.pathname;
-  const critical=event.request.mode==='navigate'||NO_CACHE.includes(path);
-  if(critical){
-    event.respondWith(fetch(event.request,{cache:'no-store'}).then(response=>{
-      if(response.ok&&event.request.mode==='navigate'){
-        const copy=response.clone();
-        caches.open(CACHE).then(c=>c.put('/index.html',copy)).catch(()=>{});
-      }
-      return response;
-    }).catch(()=>caches.match(event.request).then(r=>r||caches.match('/index.html'))));
+const CACHE = 'world-explorer-v13';
+const CORE = [
+  '/',
+  '/index.html',
+  '/style.css?v=13',
+  '/app.js?v=13',
+  '/manifest.webmanifest',
+  '/vendor/leaflet.js',
+  '/vendor/leaflet.css'
+];
+const NO_CACHE = ['/app.js', '/style.css', '/index.html', '/sw.js'];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE)
+      .then(async (cache) => {
+        for (const url of CORE) {
+          try {
+            const response = await fetch(url, { cache: 'no-store' });
+            if (response.ok) await cache.put(url, response);
+          } catch (_) {}
+        }
+      })
+      .then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+
+  const url = new URL(event.request.url);
+  if (url.origin !== location.origin) return;
+
+  const path = url.pathname;
+  const critical = event.request.mode === 'navigate' || NO_CACHE.includes(path);
+
+  if (critical) {
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store' })
+        .then((response) => {
+          if (response.ok && event.request.mode === 'navigate') {
+            const copy = response.clone();
+            caches.open(CACHE).then((cache) => cache.put('/index.html', copy)).catch(() => {});
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request).then((cached) => cached || caches.match('/index.html')))
+    );
     return;
   }
-  event.respondWith(caches.match(event.request).then(cached=>cached||fetch(event.request).then(response=>{
-    if(response.ok){const copy=response.clone();caches.open(CACHE).then(c=>c.put(event.request,copy)).catch(()=>{});}
-    return response;
-  }).catch(()=>caches.match('/index.html'))));
+
+  event.respondWith(
+    caches.match(event.request).then((cached) => cached || fetch(event.request).then((response) => {
+      if (response.ok) {
+        const copy = response.clone();
+        caches.open(CACHE).then((cache) => cache.put(event.request, copy)).catch(() => {});
+      }
+      return response;
+    }).catch(() => caches.match('/index.html')))
+  );
 });
