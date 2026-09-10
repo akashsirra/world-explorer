@@ -11,10 +11,13 @@ for (const file of [
   'ui-overrides.css',
   'weather.css',
   'app.js',
+  'movement-engine.js',
   'mobile-engine.js',
   'radar-visibility.js',
   'hud-toggle.js',
+  'signal-polish.js',
   'weather-engine.js',
+  'world-events.js',
   'sw.js',
   'manifest.webmanifest'
 ]) {
