@@ -1,26 +1,26 @@
-/* World Explorer v21 — mobile exploration HUD + robust marker safety */
+/* World Explorer v23 — mobile exploration HUD + living signal polish */
 .leaflet-marker-icon{overflow:visible}
 
-/* New radar signals: small, luminous, map-native. */
-.radar-signal{position:relative!important;width:34px!important;height:34px!important;padding:0!important;border:1px solid rgba(120,225,255,.42)!important;border-radius:50%!important;background:rgba(5,18,28,.82)!important;backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);display:grid!important;place-items:center!important;box-shadow:0 4px 16px rgba(0,0,0,.24),0 0 14px rgba(80,220,255,.18)!important;cursor:pointer;transition:transform .18s ease,opacity .18s ease}
-.radar-signal b{position:relative;z-index:2;font-size:15px!important;line-height:1;font-weight:500;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
-.radar-signal:hover,.radar-signal:focus-visible{transform:scale(1.18);outline:none}
-.radar-signal .signal-pulse{position:absolute;inset:-5px;border:1px solid rgba(100,225,255,.28);border-radius:50%;animation:signalPulse 2.4s ease-out infinite;pointer-events:none}
+.radar-signal{position:relative!important;width:34px!important;height:34px!important;padding:0!important;border:1px solid rgba(120,225,255,.42)!important;border-radius:50%!important;background:rgba(5,18,28,.82)!important;backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);display:grid!important;place-items:center!important;box-shadow:0 4px 16px rgba(0,0,0,.24),0 0 14px rgba(80,220,255,.18)!important;cursor:pointer;transition:transform .18s ease,opacity .18s ease,box-shadow .25s ease;animation:signalBreathe 3.2s ease-in-out var(--signal-delay,0s) infinite}
+.radar-signal b{position:relative;z-index:2;font-size:15px!important;line-height:1;font-weight:500;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45));transition:transform .25s ease,filter .25s ease}
+.radar-signal:hover,.radar-signal:focus-visible{transform:scale(1.18);outline:none;box-shadow:0 5px 20px rgba(0,0,0,.28),0 0 24px rgba(80,220,255,.34)!important}
+.radar-signal:hover b,.radar-signal:focus-visible b{transform:scale(1.12);filter:drop-shadow(0 0 6px rgba(140,235,255,.65))}
+.radar-signal:active{transform:scale(.92)}
+.radar-signal .signal-pulse{position:absolute;inset:-5px;border:1px solid rgba(100,225,255,.28);border-radius:50%;animation:signalPulse 2.4s ease-out var(--signal-delay,0s) infinite;pointer-events:none}
 .radar-signal.rare{border-color:rgba(255,216,107,.72)!important;box-shadow:0 4px 16px rgba(0,0,0,.24),0 0 20px rgba(255,216,107,.25)!important}
+.radar-signal.rare b{filter:drop-shadow(0 0 5px rgba(255,220,110,.45))}
 .radar-signal.rare .signal-pulse{border-color:rgba(255,216,107,.4)}
 .radar-signal.revealed{animation:signalReveal .42s ease-out both}
+@keyframes signalBreathe{0%,100%{filter:brightness(.96);box-shadow:0 4px 16px rgba(0,0,0,.24),0 0 12px rgba(80,220,255,.15)}50%{filter:brightness(1.08);box-shadow:0 5px 20px rgba(0,0,0,.25),0 0 20px rgba(80,220,255,.27)}}
 @keyframes signalPulse{0%{transform:scale(.72);opacity:.8}70%{transform:scale(1.42);opacity:0}100%{opacity:0}}
 @keyframes signalReveal{0%{opacity:0;transform:scale(.45)}100%{opacity:1;transform:scale(1)}}
 
-/* Legacy markers: hard-stop the old 74px cards even if a cached/older app.js creates them. */
 .marker,.marker.rare{appearance:none!important;width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important;padding:0!important;border:1px solid rgba(120,225,255,.42)!important;border-radius:50%!important;background:rgba(5,18,28,.82)!important;box-shadow:0 4px 16px rgba(0,0,0,.24),0 0 14px rgba(80,220,255,.18)!important;display:grid!important;place-items:center!important;font-size:15px!important;line-height:1!important}
 .marker span{display:none!important}
 
-/* Keep the vertical tool rail out of the discovery/HUD collision zone. */
 .side{position:absolute;top:auto;bottom:clamp(300px,33vh,430px);right:12px;gap:8px;transform:none;z-index:1200}
 .tool{width:58px;height:58px;border-radius:18px;font-size:22px}
 
-/* Expanded HUD */
 .hud{left:12px;right:12px;bottom:max(10px,env(safe-area-inset-bottom));padding:14px 14px 10px;border-radius:26px;z-index:1300;transition:height .32s ease,transform .32s ease,padding .32s ease,background .32s ease;will-change:height,transform}
 .handle-row{height:24px;display:flex;align-items:center;justify-content:center;position:relative}
 .handle{margin:0;width:54px;height:5px;border-radius:999px}
@@ -35,7 +35,6 @@
 .nav-btn{padding:6px 2px}
 .nav-btn span{font-size:23px}
 
-/* Compact HUD: true map-first mode. */
 .hud.hud-collapsed{padding:7px 9px;min-height:58px;height:58px;border-radius:20px;cursor:pointer;display:flex;align-items:center}
 .hud.hud-collapsed .handle-row{width:100%;height:42px;justify-content:flex-start;padding:0 48px 0 10px}
 .hud.hud-collapsed .handle-row::before{content:'YOUR WORLD';font-size:10px;letter-spacing:2.2px;color:rgba(202,225,236,.62);white-space:nowrap}
@@ -44,14 +43,19 @@
 .hud.hud-collapsed .handle-row::after{content:attr(data-summary);margin-left:auto;margin-right:8px;font-size:15px;font-weight:600;letter-spacing:-.1px;color:rgba(242,249,252,.95);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hud.hud-collapsed .stats,.hud.hud-collapsed .progress,.hud.hud-collapsed .chips,.hud.hud-collapsed .nav{display:none}
 
-/* Ambient fallback constellation. */
 .radar-ambient-layer{position:absolute;inset:0;z-index:650;pointer-events:none;overflow:hidden}
 .radar-ambient-layer.has-real-signals{display:none}
-.radar-ambient-signal{position:absolute;left:0;top:0;width:34px;height:34px;padding:0;border:1px solid rgba(120,225,255,.42);border-radius:50%;background:rgba(5,18,28,.78);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);display:grid;place-items:center;pointer-events:auto;box-shadow:0 0 16px rgba(80,220,255,.2);animation:ambientFloat 2.8s ease-in-out var(--delay) infinite;transition:transform .2s ease}
+.radar-ambient-signal{position:absolute;left:0;top:0;width:34px;height:34px;padding:0;border:1px solid rgba(120,225,255,.42);border-radius:50%;background:rgba(5,18,28,.78);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);display:grid;place-items:center;pointer-events:auto;box-shadow:0 0 16px rgba(80,220,255,.2);animation:ambientFloat 2.8s ease-in-out var(--delay) infinite,signalBreathe 3.2s ease-in-out var(--signal-delay,0s) infinite;transition:transform .2s ease}
 .radar-ambient-signal b{font-size:15px;font-weight:500;line-height:1;position:relative;z-index:2}
 .radar-ambient-signal span{position:absolute;inset:-5px;border:1px solid rgba(100,225,255,.28);border-radius:50%;animation:signalPulse 2.4s ease-out var(--delay) infinite}
 .radar-ambient-signal.rare{border-color:rgba(255,216,107,.75);box-shadow:0 0 20px rgba(255,216,107,.3)}
 @keyframes ambientFloat{0%,100%{margin-top:0}50%{margin-top:-4px}}
+
+/* Scan feels like the Core is actively pinging the world. */
+#map.signal-scan-active::after{content:'';position:absolute;left:50%;top:50%;width:72px;height:72px;margin:-36px;border:1px solid rgba(110,225,255,.72);border-radius:50%;box-shadow:0 0 24px rgba(80,220,255,.25);pointer-events:none;z-index:700;animation:coreScan 4.2s cubic-bezier(.2,.7,.2,1) both}
+#map.signal-scan-active::before{content:'';position:absolute;left:50%;top:50%;width:74px;height:74px;margin:-37px;border-radius:50%;background:radial-gradient(circle,rgba(110,225,255,.12),transparent 68%);pointer-events:none;z-index:699;animation:coreScanGlow 4.2s ease-out both}
+@keyframes coreScan{0%{transform:scale(.65);opacity:0}10%{opacity:.9}100%{transform:scale(8);opacity:0}}
+@keyframes coreScanGlow{0%,10%{transform:scale(.7);opacity:0}25%{opacity:1}100%{transform:scale(3.5);opacity:0}}
 
 @media(max-width:699px){
   .top{left:12px;right:12px;z-index:1400}
@@ -61,3 +65,4 @@
   .hud.hud-collapsed{left:12px;right:12px;bottom:max(10px,env(safe-area-inset-bottom))}
 }
 @media(min-width:700px){.radar-signal,.radar-ambient-signal{width:38px!important;height:38px!important}.tool{width:60px;height:60px}}
+@media(prefers-reduced-motion:reduce){.radar-signal,.radar-ambient-signal,.radar-signal .signal-pulse,.radar-ambient-signal span,#map.signal-scan-active::after,#map.signal-scan-active::before{animation:none!important}}
