@@ -8,9 +8,9 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <title>World Explorer</title>
 <link rel="stylesheet" href="/vendor/leaflet.css">
-<link rel="stylesheet" href="/style.css?v=19">
-<link rel="stylesheet" href="/ui-overrides.css?v=19">
-<link rel="stylesheet" href="/weather.css?v=19">
+<link rel="stylesheet" href="/style.css?v=20">
+<link rel="stylesheet" href="/ui-overrides.css?v=20">
+<link rel="stylesheet" href="/weather.css?v=20">
 </head>
 <body>
 <div id="map"></div>
@@ -28,7 +28,7 @@
 </aside>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <section class="hud" id="explorerHud" aria-label="Explorer status">
-<div class="handle-row"><div class="handle"></div><button class="hud-toggle" id="hudToggle" type="button" aria-label="Minimize explorer panel" aria-expanded="true" title="Minimize">⌄</button></div>
+<div class="handle-row"><div class="handle"></div><button class="hud-toggle" id="hudToggle" type="button" aria-label="Minimize explorer panel" aria-expanded="true" title="Minimize explorer panel">⌄</button></div>
 <div class="stats"><div><div class="eyebrow">YOUR WORLD</div><div class="percent"><span id="pct">0</span>% explored</div></div><div class="near"><div class="eyebrow">NEARBY</div><b id="near">0 <small>✦</small></b></div></div>
 <div class="progress" aria-label="Exploration progress"><i id="bar"></i></div>
 <div class="chips">
@@ -47,11 +47,11 @@
 </section>
 <div class="sheet" id="sheet"><section class="panel"><div class="head"><h2 id="title">Discover</h2><button class="close" id="close" aria-label="Close">×</button></div><div id="body"></div></section></div>
 <script src="/vendor/leaflet.js"></script>
-<script src="/mobile-engine.js?v=19"></script>
-<script src="/weather-engine.js?v=19"></script>
+<script src="/mobile-engine.js?v=20"></script>
+<script src="/weather-engine.js?v=20"></script>
 <script>
 (() => {
-  const version = '19';
+  const version = '20';
   const start = () => {
     if (!window.L || window.__WORLD_EXPLORER_STARTED__) return;
     window.__WORLD_EXPLORER_STARTED__ = true;
