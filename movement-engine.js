@@ -34,6 +34,11 @@
   }
   function status(on=tracking){if(!statusEl)return;statusEl.classList.toggle('on',on);const m=statusEl.querySelector('.meters');if(m)m.textContent=totalMeters>=1000?(totalMeters/1000).toFixed(2)+' km':Math.round(totalMeters)+' m';}
   function ui(){if(statusEl||!document.body)return;statusEl=document.createElement('div');statusEl.className='we-travel-status';statusEl.innerHTML='<span class="we-travel-dot"></span><span>LIVE TRAVEL</span><span class="meters">0 m</span>';document.body.appendChild(statusEl);}
+  function setTravelUi(){
+    const b=document.getElementById('travel'),loc=document.getElementById('loc');
+    if(b){b.textContent=tracking?'🚴 Ride live':'🚴 Start ride';b.classList.toggle('active',tracking);b.setAttribute('aria-pressed',String(tracking));}
+    if(loc){loc.classList.toggle('tracking',tracking);loc.title=tracking?'Live travel tracking is on':'Start live travel tracking';}
+  }
 
   function capture(){
     const oldMap=L.map;L.map=function(...args){const m=oldMap.apply(this,args);map=m;window.__WORLD_EXPLORER_MAP__=m;setTimeout(init,0);return m;};
@@ -60,7 +65,7 @@
     if(!animate){core.setLatLng([lat,lng]);return;}
     const from=core.getLatLng(),to=L.latLng(lat,lng),d=dist({lat:from.lat,lng:from.lng},{lat,lng});if(d<.5)return;
     const start=performance.now(),duration=clamp(d*18,220,900);cancelAnimationFrame(raf);
-    const tick=now=>{const t=clamp((now-start)/duration,0,1),e=t*(2-t);core.setLatLng([from.lat+(to.lat-from.lat)*e,from.lng+(to.lng-from.lng)*e]);if(t<1)raf=requestAnimationFrame(tick);};raf=requestAnimationFrame(tick);
+    const tick=now=>{const t=clamp((now-start)/duration,0,1),e=t*(2-t);core.setLatLng([from.lat+(to.lat-from.lat)*e,from.lng+(to.lng-from.lng)*e);if(t<1)raf=requestAnimationFrame(tick);};raf=requestAnimationFrame(tick);
   }
   function heading(next){if(!core||!last)return;const el=core.getElement()?.querySelector('.core-wrap');if(el)el.style.setProperty('--heading',bear(last,next)+'deg');}
 
@@ -82,9 +87,13 @@
 
   function startTracking(){
     if(tracking||!navigator.geolocation)return;
-    tracking=true;follow=true;status(true);
-    watchId=navigator.geolocation.watchPosition(position,error=>{if(error?.code===1){tracking=false;status(false);toast('Location permission is needed for Live Travel');}}, {enableHighAccuracy:true,maximumAge:1000,timeout:15000});
+    tracking=true;follow=true;status(true);setTravelUi();
+    watchId=navigator.geolocation.watchPosition(position,error=>{if(error?.code===1){tracking=false;watchId=null;status(false);setTravelUi();toast('Location permission is needed for Live Travel');}}, {enableHighAccuracy:true,maximumAge:1000,timeout:15000});
     toast('LIVE TRAVEL on · your path is being drawn');
+  }
+  function stopTracking(){
+    if(watchId!==null&&navigator.geolocation)navigator.geolocation.clearWatch(watchId);
+    watchId=null;tracking=false;status(false);setTravelUi();toast('Ride tracking paused · trail saved');
   }
   function toast(msg){const el=document.getElementById('toast');if(!el)return;el.textContent=msg;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),2600);}
 
@@ -94,8 +103,10 @@
     catch(_){/* The Locate button remains the explicit fallback. */}
   }
   function hookButtons(){
+    setTravelUi();
     const loc=document.getElementById('loc');if(loc&&!loc.__weTravelBound){loc.__weTravelBound=true;loc.addEventListener('click',()=>setTimeout(startTracking,0));}
     const center=document.getElementById('center');if(center&&!center.__weTravelBound){center.__weTravelBound=true;center.addEventListener('click',()=>{follow=true;if(last&&map)map.panTo([last.lat,last.lng],{animate:true,duration:.35});});}
+    const travel=document.getElementById('travel');if(travel&&!travel.__weTravelBound){travel.__weTravelBound=true;travel.addEventListener('click',()=>tracking?stopTracking():startTracking());}
   }
 
   capture();load();
