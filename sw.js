@@ -1,14 +1,15 @@
-const CACHE = 'world-explorer-v13';
+const CACHE = 'world-explorer-v14';
 const CORE = [
   '/',
   '/index.html',
-  '/style.css?v=13',
-  '/app.js?v=13',
+  '/style.css?v=14',
+  '/ui-overrides.css?v=14',
+  '/app.js?v=14',
   '/manifest.webmanifest',
   '/vendor/leaflet.js',
   '/vendor/leaflet.css'
 ];
-const NO_CACHE = ['/app.js', '/style.css', '/index.html', '/sw.js'];
+const NO_CACHE = ['/app.js', '/style.css', '/ui-overrides.css', '/index.html', '/sw.js'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
