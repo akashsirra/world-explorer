@@ -1,5 +1,5 @@
-const CACHE = 'world-explorer-v21';
-const CORE = ['/', '/index.html', '/style.css?v=21', '/ui-overrides.css?v=21', '/weather.css?v=21', '/app.js?v=21', '/mobile-engine.js?v=21', '/radar-visibility.js?v=21', '/hud-toggle.js?v=21', '/weather-engine.js?v=21', '/manifest.webmanifest', '/vendor/leaflet.js', '/vendor/leaflet.css'];
+const CACHE = 'world-explorer-v22';
+const CORE = ['/', '/index.html', '/style.css?v=22', '/ui-overrides.css?v=22', '/weather.css?v=22', '/app.js?v=22', '/mobile-engine.js?v=22', '/radar-visibility.js?v=22', '/hud-toggle.js?v=22', '/weather-engine.js?v=22', '/manifest.webmanifest', '/vendor/leaflet.js', '/vendor/leaflet.css'];
 const NO_CACHE = ['/app.js', '/style.css', '/ui-overrides.css', '/weather.css', '/mobile-engine.js', '/radar-visibility.js', '/hud-toggle.js', '/weather-engine.js', '/index.html', '/sw.js'];
 
 self.addEventListener('install', event => {
