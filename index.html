@@ -8,9 +8,9 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <title>World Explorer</title>
 <link rel="stylesheet" href="/vendor/leaflet.css">
-<link rel="stylesheet" href="/style.css?v=27">
-<link rel="stylesheet" href="/ui-overrides.css?v=27">
-<link rel="stylesheet" href="/weather.css?v=27">
+<link rel="stylesheet" href="/style.css?v=28">
+<link rel="stylesheet" href="/ui-overrides.css?v=28">
+<link rel="stylesheet" href="/weather.css?v=28">
 </head>
 <body>
 <div id="map"></div>
@@ -48,19 +48,19 @@
 </section>
 <div class="sheet" id="sheet"><section class="panel"><div class="head"><h2 id="title">Discover</h2><button class="close" id="close" aria-label="Close">×</button></div><div id="body"></div></section></div>
 <script src="/vendor/leaflet.js"></script>
-<script src="/movement-engine.js?v=27"></script>
-<script src="/mobile-engine.js?v=27"></script>
-<script src="/weather-engine.js?v=27"></script>
+<script src="/movement-engine.js?v=28"></script>
+<script src="/mobile-engine.js?v=28"></script>
+<script src="/weather-engine.js?v=28"></script>
 <script>
 (() => {
-  const version = '27';
+  const version = '28';
   const start = () => {
     if (!window.L || window.__WORLD_EXPLORER_STARTED__) return;
     window.__WORLD_EXPLORER_STARTED__ = true;
     const app = document.createElement('script');
     app.src = '/app.js?v=' + version;
     app.onload = () => {
-      ['radar-visibility.js','hud-toggle.js','signal-polish.js'].forEach(file => {
+      ['radar-visibility.js','hud-toggle.js','signal-polish.js','world-events.js'].forEach(file => {
         const script = document.createElement('script');
         script.src = '/' + file + '?v=' + version;
         document.body.appendChild(script);
