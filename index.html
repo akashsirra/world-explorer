@@ -7,28 +7,28 @@
 <meta name="description" content="World Explorer — a real-world exploration game driven by your location, weather and time.">
 <link rel="manifest" href="/manifest.webmanifest">
 <title>World Explorer</title>
-<link id="leaflet-css" rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="/style.css?v=12">
+<link rel="stylesheet" href="/vendor/leaflet.css">
+<link rel="stylesheet" href="/style.css?v=13">
 </head>
 <body>
 <div id="map"></div>
 <div class="map-loading" id="mapLoading"><span></span><b>Loading your world…</b></div>
 <div class="shade day" id="shade"></div>
 <header class="top">
-<label class="search"><span>⌕</span><input id="search" placeholder="Explore your world" autocomplete="off"></label>
+<label class="search"><span aria-hidden="true">⌕</span><input id="search" placeholder="Explore your world" autocomplete="off" inputmode="search" aria-label="Search for a place"></label>
 <button class="glass" id="loc" aria-label="Locate me">◉</button>
 </header>
 <aside class="side">
-<button class="tool" id="center" aria-label="Center">⌖</button>
+<button class="tool" id="center" aria-label="Center on Explorer Core">⌖</button>
 <button class="tool" id="refresh" aria-label="Reshuffle discoveries">◌</button>
-<button class="tool" id="weather" aria-label="Weather">☁</button>
-<button class="tool" id="toggle" aria-label="Day night">☾</button>
+<button class="tool" id="weather" aria-label="Refresh weather">☁</button>
+<button class="tool" id="toggle" aria-label="Toggle day and night">☾</button>
 </aside>
-<div class="toast" id="toast"></div>
-<section class="hud">
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<section class="hud" aria-label="Explorer status">
 <div class="handle"></div>
 <div class="stats"><div><div class="eyebrow">YOUR WORLD</div><div class="percent"><span id="pct">0</span>% explored</div></div><div class="near"><div class="eyebrow">NEARBY</div><b id="near">0 <small>✦</small></b></div></div>
-<div class="progress"><i id="bar"></i></div>
+<div class="progress" aria-label="Exploration progress"><i id="bar"></i></div>
 <div class="chips">
 <button class="chip scan" id="scan">✦ Scan</button>
 <div class="chip" id="disc">✦ 0 discoveries</div>
@@ -36,60 +36,37 @@
 <div class="chip" id="quest">🎯 Find 3 discoveries</div>
 <div class="chip" id="wx">☁ Loading</div>
 </div>
-<nav class="nav">
+<nav class="nav" aria-label="Explorer sections">
 <button class="nav-btn active" data-tab="map"><span>🗺️</span>Map</button>
 <button class="nav-btn" data-tab="discover"><span>✨</span>Discover</button>
 <button class="nav-btn" data-tab="memories"><span>📸</span>Memories</button>
 <button class="nav-btn" data-tab="profile"><span>🏆</span>Profile</button>
 </nav>
 </section>
-<div class="sheet" id="sheet"><section class="panel"><div class="head"><h2 id="title">Discover</h2><button class="close" id="close">×</button></div><div id="body"></div></section></div>
-
+<div class="sheet" id="sheet"><section class="panel"><div class="head"><h2 id="title">Discover</h2><button class="close" id="close" aria-label="Close">×</button></div><div id="body"></div></section></div>
+<script src="/vendor/leaflet.js"></script>
 <script>
 (() => {
-  const version = '12';
-  const cdns = [
-    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-    'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js'
-  ];
-  let started = false;
-
-  const box = () => document.getElementById('mapLoading');
-
-  const fail = () => {
-    const el = box();
-    if (el) el.innerHTML = '<b>Map engine could not start. Reloading should retry automatically.</b>';
-  };
-
+  const version = '13';
   const start = () => {
-    if (started || !window.L) return;
-    started = true;
+    if (!window.L || window.__WORLD_EXPLORER_STARTED__) return;
+    window.__WORLD_EXPLORER_STARTED__ = true;
     const app = document.createElement('script');
     app.src = '/app.js?v=' + version;
-    app.onload = () => {
-      requestAnimationFrame(() => setTimeout(() => box()?.classList.add('hidden'), 250));
+    app.onload = () => requestAnimationFrame(() => setTimeout(() => document.getElementById('mapLoading')?.classList.add('hidden'), 250));
+    app.onerror = () => {
+      const el = document.getElementById('mapLoading');
+      if (el) el.innerHTML = '<b>The Explorer Core failed to start. Please reload.</b>';
     };
-    app.onerror = fail;
     document.body.appendChild(app);
   };
-
-  const loadCdn = (i = 0) => {
-    if (window.L) return start();
-    if (i >= cdns.length) return fail();
-    const script = document.createElement('script');
-    script.src = cdns[i];
-    script.onload = start;
-    script.onerror = () => loadCdn(i + 1);
-    document.head.appendChild(script);
-  };
-
-  loadCdn();
-
+  if (window.L) start();
+  else {
+    const el = document.getElementById('mapLoading');
+    if (el) el.innerHTML = '<b>Map engine unavailable. Please reload.</b>';
+  }
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js?v=' + version).catch(() => {});
-    });
+    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js?v=' + version).catch(() => {}));
   }
 })();
 </script>
