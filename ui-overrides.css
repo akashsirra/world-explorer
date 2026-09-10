@@ -2,7 +2,6 @@
 .marker{width:58px;height:58px;border-radius:19px;font-size:29px;box-shadow:0 10px 24px #0006,0 0 18px #ffd86b20}
 .marker span{inset:-5px;border-radius:23px}
 .marker.rare{box-shadow:0 10px 24px #0006,0 0 24px #64e8ff55}
-.leaflet-marker-icon:has(.we-declutter-hidden){pointer-events:none}
 .we-declutter-hidden{opacity:0!important;visibility:hidden!important;transform:scale(.72)!important;pointer-events:none!important}
 .side{top:auto;bottom:clamp(330px,34vh,450px);right:12px;gap:8px;transform:none}
 .tool{width:58px;height:58px;border-radius:18px;font-size:22px}
