@@ -8,8 +8,8 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <title>World Explorer</title>
 <link rel="stylesheet" href="/vendor/leaflet.css">
-<link rel="stylesheet" href="/style.css?v=16">
-<link rel="stylesheet" href="/ui-overrides.css?v=16">
+<link rel="stylesheet" href="/style.css?v=17">
+<link rel="stylesheet" href="/ui-overrides.css?v=17">
 </head>
 <body>
 <div id="map"></div>
@@ -46,16 +46,21 @@
 </section>
 <div class="sheet" id="sheet"><section class="panel"><div class="head"><h2 id="title">Discover</h2><button class="close" id="close" aria-label="Close">×</button></div><div id="body"></div></section></div>
 <script src="/vendor/leaflet.js"></script>
-<script src="/mobile-engine.js?v=16"></script>
+<script src="/mobile-engine.js?v=17"></script>
 <script>
 (() => {
-  const version = '16';
+  const version = '17';
   const start = () => {
     if (!window.L || window.__WORLD_EXPLORER_STARTED__) return;
     window.__WORLD_EXPLORER_STARTED__ = true;
     const app = document.createElement('script');
     app.src = '/app.js?v=' + version;
-    app.onload = () => requestAnimationFrame(() => setTimeout(() => document.getElementById('mapLoading')?.classList.add('hidden'), 250));
+    app.onload = () => {
+      const radar = document.createElement('script');
+      radar.src = '/radar-visibility.js?v=' + version;
+      document.body.appendChild(radar);
+      requestAnimationFrame(() => setTimeout(() => document.getElementById('mapLoading')?.classList.add('hidden'), 250));
+    };
     app.onerror = () => { const el=document.getElementById('mapLoading'); if(el)el.innerHTML='<b>The Explorer Core failed to start. Please reload.</b>'; };
     document.body.appendChild(app);
   };
