@@ -4,7 +4,20 @@ const out = 'public';
 await rm(out, { recursive: true, force: true });
 await mkdir(`${out}/vendor`, { recursive: true });
 
-for (const file of ['index.html', 'style.css', 'app.js', 'sw.js', 'manifest.webmanifest']) {
+// Keep every runtime asset referenced by index.html in the production bundle.
+for (const file of [
+  'index.html',
+  'style.css',
+  'ui-overrides.css',
+  'weather.css',
+  'app.js',
+  'mobile-engine.js',
+  'radar-visibility.js',
+  'hud-toggle.js',
+  'weather-engine.js',
+  'sw.js',
+  'manifest.webmanifest'
+]) {
   await cp(file, `${out}/${file}`);
 }
 
