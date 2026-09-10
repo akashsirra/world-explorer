@@ -1,0 +1,81 @@
+(() => {
+  'use strict';
+
+  const KEY = 'we-trip-v2';
+  let map = null, trail = null, glow = null, rider = null, timer = null, active = false;
+  let lastSignature = '';
+
+  const readTrip = () => {
+    try { return JSON.parse(localStorage.getItem(KEY) || 'null') || {}; } catch (_) { return {}; }
+  };
+  const hav = (a,b) => {
+    const R=6371000,p=Math.PI/180,d1=(b.lat-a.lat)*p,d2=(b.lng-a.lng)*p;
+    const x=Math.sin(d1/2)**2+Math.cos(a.lat*p)*Math.cos(b.lat*p)*Math.sin(d2/2)**2;
+    return 2*R*Math.asin(Math.sqrt(Math.min(1,x)));
+  };
+  const total = pts => {
+    let d=0; for(let i=1;i<pts.length;i++) d+=hav(pts[i-1],pts[i]);
+    return d;
+  };
+
+  function styles(){
+    if(document.getElementById('we-ride-visual-style')) return;
+    const s=document.createElement('style'); s.id='we-ride-visual-style'; s.textContent=`
+      .we-ride-launch{position:fixed;z-index:6900;right:18px;bottom:calc(max(82px,env(safe-area-inset-bottom) + 72px) + 72px);display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid rgba(92,231,255,.38);border-radius:999px;background:rgba(4,16,24,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 8px 28px rgba(0,0,0,.28),0 0 24px rgba(55,220,255,.14);color:#ecfcff;font:900 11px/1 system-ui,sans-serif;letter-spacing:.1em;cursor:pointer;transition:.2s;}
+      .we-ride-launch:active{transform:scale(.95)}.we-ride-launch.live{border-color:rgba(93,238,255,.95);box-shadow:0 0 0 2px rgba(93,238,255,.12),0 0 34px rgba(55,220,255,.4);animation:weRideLaunch 1.8s ease-in-out infinite}.we-ride-launch .dot{width:8px;height:8px;border-radius:50%;background:#61e7ff;box-shadow:0 0 13px #61e7ff}.we-ride-launch.live .dot{animation:weRideDot 1s infinite}.we-ride-launch small{font-size:9px;opacity:.58;letter-spacing:.04em;font-weight:700}
+      .we-ride-card{position:fixed;z-index:6800;left:50%;bottom:calc(max(82px,env(safe-area-inset-bottom) + 72px) + 10px);transform:translateX(-50%) translateY(12px);display:none;align-items:center;gap:12px;padding:9px 13px;border:1px solid rgba(92,231,255,.3);border-radius:18px;background:rgba(4,16,24,.9);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);box-shadow:0 8px 30px rgba(0,0,0,.25);color:#eafcff;font:800 10px/1 system-ui,sans-serif;letter-spacing:.08em;pointer-events:none}.we-ride-card.on{display:flex;transform:translateX(-50%) translateY(0)}.we-ride-card b{font-size:12px;color:#69eaff}.we-ride-card span{opacity:.65;letter-spacing:.03em}.we-ride-card i{width:6px;height:6px;border-radius:50%;background:#69eaff;box-shadow:0 0 10px #69eaff}
+      .we-rider-dot{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:rgba(4,18,27,.95);border:2px solid #6beaff;box-shadow:0 0 0 6px rgba(93,231,255,.1),0 0 28px rgba(55,220,255,.7);font-size:15px}
+      .we-rider-pulse{position:absolute;inset:-9px;border:1px solid rgba(100,230,255,.55);border-radius:50%;animation:weRiderPulse 1.6s ease-out infinite}
+      @keyframes weRideLaunch{50%{transform:translateY(-2px)}}@keyframes weRideDot{50%{transform:scale(.55);opacity:.45}}@keyframes weRiderPulse{0%{transform:scale(.65);opacity:.8}80%{transform:scale(1.5);opacity:0}100%{opacity:0}}
+      @media(max-width:520px){.we-ride-launch{right:14px;bottom:calc(max(82px,env(safe-area-inset-bottom) + 72px) + 72px)}}
+    `; document.head.appendChild(s);
+  }
+
+  function ui(){
+    if(!document.getElementById('weRideLaunch')){
+      const b=document.createElement('button'); b.id='weRideLaunch'; b.className='we-ride-launch'; b.type='button'; b.innerHTML='<span class="dot"></span><b>RIDE</b><small>LIVE TRAIL</small>'; document.body.appendChild(b);
+      b.onclick=()=>document.getElementById('travelSide')?.click() || document.getElementById('travel')?.click();
+    }
+    if(!document.getElementById('weRideCard')){
+      const c=document.createElement('div'); c.id='weRideCard'; c.className='we-ride-card'; c.innerHTML='<i></i><b>LIVE TRAIL</b><span>0 m</span><span>FOLLOW ON</span>'; document.body.appendChild(c);
+    }
+  }
+
+  function ensureMap(){
+    map=window.__WORLD_EXPLORER_MAP__||map;
+    if(!map||!window.L)return false;
+    if(!glow){
+      glow=L.polyline([],{color:'#19d9ff',weight:14,opacity:.22,lineCap:'round',lineJoin:'round',interactive:false,pane:'overlayPane'}).addTo(map);
+      trail=L.polyline([],{color:'#8df2ff',weight:6,opacity:.95,lineCap:'round',lineJoin:'round',interactive:false,pane:'overlayPane'}).addTo(map);
+    }
+    return true;
+  }
+
+  function draw(){
+    if(!ensureMap())return;
+    const trip=readTrip(), pts=Array.isArray(trip.points)?trip.points.filter(p=>Number.isFinite(Number(p.lat))&&Number.isFinite(Number(p.lng))):[];
+    const sig=pts.length+':'+(pts.at(-1)?.lat||0)+':'+(pts.at(-1)?.lng||0);
+    const travel=document.getElementById('travel'), side=document.getElementById('travelSide');
+    active=!!(travel?.classList.contains('active')||side?.classList.contains('active'));
+    if(sig!==lastSignature){
+      lastSignature=sig;
+      const latlngs=pts.map(p=>[Number(p.lat),Number(p.lng)]);
+      glow?.setLatLngs(latlngs); trail?.setLatLngs(latlngs);
+      if(rider)map.removeLayer(rider);
+      if(pts.length){
+        const p=pts.at(-1);
+        rider=L.marker([p.lat,p.lng],{interactive:false,zIndexOffset:3200,icon:L.divIcon({className:'',html:'<div class="we-rider-dot"><span class="we-rider-pulse"></span>🚴</div>',iconSize:[28,28],iconAnchor:[14,14]})}).addTo(map);
+      }
+    }
+    const d=Number(trip.totalMeters)||total(pts);
+    const card=document.getElementById('weRideCard'), launch=document.getElementById('weRideLaunch');
+    card?.classList.toggle('on',active);
+    launch?.classList.toggle('live',active);
+    if(card){const spans=card.querySelectorAll('span');if(spans[0])spans[0].textContent=d>=1000?(d/1000).toFixed(2)+' km':Math.round(d)+' m';}
+    if(launch)launch.innerHTML='<span class="dot"></span><b>'+(active?'LIVE':'RIDE')+'</b><small>'+(active?'TRAIL RECORDING':'START JOURNEY')+'</small>';
+  }
+
+  function boot(){styles();ui();draw();if(!timer)timer=setInterval(draw,700);}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,800),{once:true});else setTimeout(boot,800);
+  [1200,2200,4000].forEach(t=>setTimeout(boot,t));
+})();
