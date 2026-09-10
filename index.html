@@ -8,9 +8,9 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <title>World Explorer</title>
 <link rel="stylesheet" href="/vendor/leaflet.css">
-<link rel="stylesheet" href="/style.css?v=26">
-<link rel="stylesheet" href="/ui-overrides.css?v=26">
-<link rel="stylesheet" href="/weather.css?v=26">
+<link rel="stylesheet" href="/style.css?v=27">
+<link rel="stylesheet" href="/ui-overrides.css?v=27">
+<link rel="stylesheet" href="/weather.css?v=27">
 </head>
 <body>
 <div id="map"></div>
@@ -37,6 +37,7 @@
 <div class="chip">🧭 Explorer</div>
 <div class="chip" id="quest">🎯 Find 3 discoveries</div>
 <div class="chip" id="wx">☁ Loading</div>
+<button class="chip" id="travel" type="button" aria-pressed="false">🚴 Start ride</button>
 </div>
 <nav class="nav" aria-label="Explorer sections">
 <button class="nav-btn active" data-tab="map"><span>🗺️</span>Map</button>
@@ -47,12 +48,12 @@
 </section>
 <div class="sheet" id="sheet"><section class="panel"><div class="head"><h2 id="title">Discover</h2><button class="close" id="close" aria-label="Close">×</button></div><div id="body"></div></section></div>
 <script src="/vendor/leaflet.js"></script>
-<script src="/movement-engine.js?v=26"></script>
-<script src="/mobile-engine.js?v=26"></script>
-<script src="/weather-engine.js?v=26"></script>
+<script src="/movement-engine.js?v=27"></script>
+<script src="/mobile-engine.js?v=27"></script>
+<script src="/weather-engine.js?v=27"></script>
 <script>
 (() => {
-  const version = '26';
+  const version = '27';
   const start = () => {
     if (!window.L || window.__WORLD_EXPLORER_STARTED__) return;
     window.__WORLD_EXPLORER_STARTED__ = true;
