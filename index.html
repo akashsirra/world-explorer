@@ -8,8 +8,8 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <title>World Explorer</title>
 <link rel="stylesheet" href="/vendor/leaflet.css">
-<link rel="stylesheet" href="/style.css?v=14">
-<link rel="stylesheet" href="/ui-overrides.css?v=14">
+<link rel="stylesheet" href="/style.css?v=15">
+<link rel="stylesheet" href="/ui-overrides.css?v=15">
 </head>
 <body>
 <div id="map"></div>
@@ -46,9 +46,10 @@
 </section>
 <div class="sheet" id="sheet"><section class="panel"><div class="head"><h2 id="title">Discover</h2><button class="close" id="close" aria-label="Close">×</button></div><div id="body"></div></section></div>
 <script src="/vendor/leaflet.js"></script>
+<script src="/mobile-engine.js?v=15"></script>
 <script>
 (() => {
-  const version = '14';
+  const version = '15';
   const start = () => {
     if (!window.L || window.__WORLD_EXPLORER_STARTED__) return;
     window.__WORLD_EXPLORER_STARTED__ = true;
