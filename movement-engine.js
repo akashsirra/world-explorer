@@ -1,7 +1,7 @@
 (() => {
   'use strict';
   if (!window.L) return;
-  const KEY='we-trip-v2',MAX_POINTS=1800,MIN_POINT_METERS=3,MAX_ACCURACY=80,MAX_JUMP_METERS=250,NEW_TRIP_METERS=1000,FOLLOW_AFTER_METERS=12;
+  const KEY='we-trip-v2',MAX_POINTS=1800,MIN_POINT_METERS=7,MAX_ACCURACY=60,MAX_JUMP_METERS=250,NEW_TRIP_METERS=1000,FOLLOW_AFTER_METERS=12,STATIONARY_SPEED=1.8;
   let map=null,core=null,watchId=null,tracking=false,follow=true,route=null,routeGlow=null,last=null,points=[],totalMeters=0,currentSpeed=0,statusEl=null,raf=0;
   const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
   const dist=(a,b)=>{const R=6371000,p=Math.PI/180,dLat=(b.lat-a.lat)*p,dLng=(b.lng-a.lng)*p,x=Math.sin(dLat/2)**2+Math.cos(a.lat*p)*Math.cos(b.lat*p)*Math.sin(dLng/2)**2;return 2*R*Math.asin(Math.sqrt(clamp(x,0,1)));};
@@ -24,12 +24,43 @@
   function init(){if(!map||!document.body)return;styles();ui();if(!route){routeGlow=L.polyline(coords(),{className:'we-travel-glow',color:'#24cfff',weight:11,opacity:.28,lineCap:'round',lineJoin:'round',interactive:false,pane:'overlayPane'}).addTo(map);route=L.polyline(coords(),{color:'#72eaff',weight:5,opacity:.98,lineCap:'round',lineJoin:'round',interactive:false,pane:'overlayPane'}).addTo(map);}route.setLatLngs(coords());routeGlow.setLatLngs(coords());if(!map.__weTravelEvents){map.__weTravelEvents=true;map.on('dragstart',()=>{follow=false;});map.on('zoomstart',()=>{if(tracking)follow=false;});}hookButtons();}
   function moveCore(lat,lng,animate=true){if(!core)return;if(!animate){core.setLatLng([lat,lng]);return;}const from=core.getLatLng(),to=L.latLng(lat,lng),d=dist({lat:from.lat,lng:from.lng},{lat,lng});if(d<.5)return;const start=performance.now(),duration=clamp(d*18,220,900);cancelAnimationFrame(raf);const tick=now=>{const t=clamp((now-start)/duration,0,1),e=t*(2-t);core.setLatLng([from.lat+(to.lat-from.lat)*e,from.lng+(to.lng-from.lng)*e]);if(t<1)raf=requestAnimationFrame(tick);};raf=requestAnimationFrame(tick);}
   function heading(next){if(!core||!last)return;const el=core.getElement()?.querySelector('.core-wrap');if(el)el.style.setProperty('--heading',bear(last,next)+'deg');}
-  function position(pos){const c=pos.coords,lat=Number(c.latitude),lng=Number(c.longitude),accuracy=Number(c.accuracy);if(!Number.isFinite(lat)||!Number.isFinite(lng))return;if(Number.isFinite(accuracy)&&accuracy>MAX_ACCURACY)return;const next={lat,lng,t:Number(pos.timestamp)||Date.now(),accuracy:accuracy||0};if(!last){last=next;points.push(next);moveCore(lat,lng,false);route?.setLatLngs(coords());routeGlow?.setLatLngs(coords());save();status();return;}const d=dist(last,next);if(d<MIN_POINT_METERS)return;if(d>NEW_TRIP_METERS){points=[];totalMeters=0;currentSpeed=0;last=null;route?.setLatLngs([]);routeGlow?.setLatLngs([]);save();return position(pos);}if(d>MAX_JUMP_METERS&&(!Number.isFinite(c.speed)||c.speed<0||c.speed>25))return;heading(next);const dt=Math.max(0.25,(next.t-last.t)/1000);currentSpeed=Number.isFinite(c.speed)&&c.speed>=0?c.speed:d/dt;if(currentSpeed>40)currentSpeed=40;moveCore(lat,lng,true);points.push(next);if(points.length>MAX_POINTS)points=points.slice(-MAX_POINTS);totalMeters+=d;last=next;route?.setLatLngs(coords());routeGlow?.setLatLngs(coords());if(follow&&map){const center=map.getCenter();if(dist({lat:center.lat,lng:center.lng},next)>FOLLOW_AFTER_METERS)map.panTo([lat,lng],{animate:true,duration:.45,noMoveStart:true});}status();save();}
-  function startTracking(){if(tracking||!navigator.geolocation)return;tracking=true;follow=true;status(true);setTravelUi();toast('LIVE RIDE on · your path is glowing');}
-  function beginWatch(){if(watchId!==null)return;watchId=navigator.geolocation.watchPosition(position,error=>{if(error?.code===1){tracking=false;watchId=null;status(false);setTravelUi();toast('Location permission is needed for Live Travel');}},{enableHighAccuracy:true,maximumAge:1000,timeout:15000});}
+  function position(pos){
+    if(!tracking)return;
+    const c=pos.coords,lat=Number(c.latitude),lng=Number(c.longitude),accuracy=Number(c.accuracy);
+    if(!Number.isFinite(lat)||!Number.isFinite(lng))return;
+    if(Number.isFinite(accuracy)&&accuracy>MAX_ACCURACY)return;
+    const next={lat,lng,t:Number(pos.timestamp)||Date.now(),accuracy:accuracy||0};
+    if(!last){last=next;points.push(next);moveCore(lat,lng,false);route?.setLatLngs(coords());routeGlow?.setLatLngs(coords());save();status();return;}
+    const d=dist(last,next);
+    const gpsSpeed=Number(c.speed);
+    const reportedSpeed=Number.isFinite(gpsSpeed)&&gpsSpeed>=0?gpsSpeed:null;
+    const accuracyFloor=Math.max(MIN_POINT_METERS,Math.min(12,accuracy*0.75));
+    // Phone GPS can wander several metres while completely stationary. Ignore those fixes.
+    // When the OS reports a real walking/riding speed, allow a smaller step.
+    const movingBySpeed=reportedSpeed!==null&&reportedSpeed>=STATIONARY_SPEED;
+    if(d<accuracyFloor&&!movingBySpeed)return;
+    if(d<MIN_POINT_METERS&&!movingBySpeed)return;
+    if(d>NEW_TRIP_METERS){points=[];totalMeters=0;currentSpeed=0;last=null;route?.setLatLngs([]);routeGlow?.setLatLngs([]);save();return position(pos);}
+    if(d>MAX_JUMP_METERS&&(!Number.isFinite(c.speed)||c.speed<0||c.speed>25))return;
+    const dt=Math.max(0.25,(next.t-last.t)/1000);
+    const inferredSpeed=d/dt;
+    // A large apparent speed from one GPS jump is almost always location noise.
+    if(reportedSpeed===null&&inferredSpeed>18)return;
+    if(reportedSpeed!==null&&reportedSpeed<STATIONARY_SPEED&&d<12)return;
+    heading(next);
+    currentSpeed=reportedSpeed!==null?reportedSpeed:inferredSpeed;
+    if(currentSpeed>40)currentSpeed=40;
+    moveCore(lat,lng,true);
+    points.push(next);if(points.length>MAX_POINTS)points=points.slice(-MAX_POINTS);
+    totalMeters+=d;last=next;
+    route?.setLatLngs(coords());routeGlow?.setLatLngs(coords());
+    if(follow&&map){const center=map.getCenter();if(dist({lat:center.lat,lng:center.lng},next)>FOLLOW_AFTER_METERS)map.panTo([lat,lng],{animate:true,duration:.45,noMoveStart:true});}
+    status();save();
+  }
+  function beginWatch(){if(watchId!==null||!tracking||!navigator.geolocation)return;watchId=navigator.geolocation.watchPosition(position,error=>{if(error?.code===1){tracking=false;watchId=null;status(false);setTravelUi();toast('Location permission is needed for Live Travel');}},{enableHighAccuracy:true,maximumAge:1000,timeout:15000});}
+  function startTracking(){if(tracking||!navigator.geolocation)return;tracking=true;follow=true;status(true);setTravelUi();toast('LIVE RIDE on · GPS stabilizing');beginWatch();}
   function stopTracking(){if(watchId!==null&&navigator.geolocation)navigator.geolocation.clearWatch(watchId);watchId=null;tracking=false;currentSpeed=0;status(false);setTravelUi();toast('Ride tracking paused · trail saved');}
   function toast(msg){const el=document.getElementById('toast');if(!el)return;el.textContent=msg;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),2600);}
-  async function autoStartIfAllowed(){if(!navigator.geolocation)return;try{if(navigator.permissions?.query){const p=await navigator.permissions.query({name:'geolocation'});if(p.state==='granted')beginWatch();p.onchange=()=>{if(p.state==='granted'&&tracking)beginWatch();};}}catch(_){} }
-  function hookButtons(){setTravelUi();const loc=document.getElementById('loc');if(loc&&!loc.__weTravelBound){loc.__weTravelBound=true;loc.addEventListener('click',()=>setTimeout(()=>{if(tracking)beginWatch();},0));}const center=document.getElementById('center');if(center&&!center.__weTravelBound){center.__weTravelBound=true;center.addEventListener('click',()=>{follow=true;if(last&&map)map.panTo([last.lat,last.lng],{animate:true,duration:.35});});}const travel=document.getElementById('travel');if(travel&&!travel.__weTravelBound){travel.__weTravelBound=true;travel.addEventListener('click',()=>tracking?stopTracking():(startTracking(),beginWatch()));}const side=document.getElementById('travelSide');if(side&&!side.__weTravelBound){side.__weTravelBound=true;side.addEventListener('click',()=>tracking?stopTracking():(startTracking(),beginWatch()));}}
-  capture();load();const boot=()=>{init();hookButtons();autoStartIfAllowed();};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();setTimeout(boot,500);setTimeout(boot,1500);setTimeout(boot,3000);
+  function hookButtons(){setTravelUi();const loc=document.getElementById('loc');if(loc&&!loc.__weTravelBound){loc.__weTravelBound=true;loc.addEventListener('click',()=>setTimeout(()=>{if(tracking)beginWatch();},0));}const center=document.getElementById('center');if(center&&!center.__weTravelBound){center.__weTravelBound=true;center.addEventListener('click',()=>{follow=true;if(last&&map)map.panTo([last.lat,last.lng],{animate:true,duration:.35});});}const travel=document.getElementById('travel');if(travel&&!travel.__weTravelBound){travel.__weTravelBound=true;travel.addEventListener('click',()=>tracking?stopTracking():startTracking());}const side=document.getElementById('travelSide');if(side&&!side.__weTravelBound){side.__weTravelBound=true;side.addEventListener('click',()=>tracking?stopTracking():startTracking());}}
+  capture();load();const boot=()=>{init();hookButtons();};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();setTimeout(boot,500);setTimeout(boot,1500);setTimeout(boot,3000);
 })();
