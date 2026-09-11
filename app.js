@@ -2,6 +2,7 @@
   'use strict';
 
   const $ = (s) => document.querySelector(s);
+  const $$ = (s) => document.querySelectorAll(s);
   const KEY = 'we-v6';
   const CLAIM_RADIUS = 150;
   const clamp = (v, a, b) => Math.min(b, Math.max(a, Number(v)));
@@ -32,141 +33,29 @@
   let fallbackUsed = false;
   osm.on('tileerror', () => { if (!fallbackUsed) { fallbackUsed = true; map.removeLayer(osm); carto.addTo(map); toast('Switching map source…'); } });
 
-  const me = L.marker([S.lat, S.lng], {
-    icon: L.divIcon({ className: '', html: '<div class="core-wrap"><div class="core-aura"></div><div class="core-orbit o1"></div><div class="core-orbit o2"></div><div class="core"><span></span></div><i class="core-arrow"></i></div>', iconSize: [92, 92], iconAnchor: [46, 46] }),
-    zIndexOffset: 3000,
-    interactive: false
-  }).addTo(map);
-
-  const pool = {
-    clear: ['✦','◇','✧','◈','☀'], cloud: ['☁','✦','◇','☕','◈'], rain: ['◇','✦','💧','☕','◈'],
-    storm: ['⚡','✦','◇','◈','✧'], snow: ['❄','◇','✦','◈','✧'], fog: ['◌','✦','◇','◈','👁'], drizzle: ['✧','◇','☕','💧','✦']
-  };
+  const me = L.marker([S.lat, S.lng], { icon: L.divIcon({ className: '', html: '<div class="core-wrap"><div class="core-aura"></div><div class="core-orbit o1"></div><div class="core-orbit o2"></div><div class="core"><span></span></div><i class="core-arrow"></i></div>', iconSize: [92, 92], iconAnchor: [46, 46] }), zIndexOffset: 3000, interactive: false }).addTo(map);
+  const pool = { clear:['✦','◇','✧','◈','☀'], cloud:['☁','✦','◇','☕','◈'], rain:['◇','✦','💧','☕','◈'], storm:['⚡','✦','◇','◈','✧'], snow:['❄','◇','✦','◈','✧'], fog:['◌','✦','◇','◈','👁'], drizzle:['✧','◇','☕','💧','✦'] };
   const names = ['Trail Spark','Local Secret','Hidden Echo','Celestial Cache','Wild Relic','Sky Fragment','Forgotten Corner','Prism Relic'];
-  const labels = { clear:'Clear', cloud:'Cloudy', fog:'Misty', drizzle:'Drizzle', rain:'Rainy', snow:'Snowy', storm:'Stormy' };
-  const weatherIcons = { clear:'☀️', cloud:'☁️', fog:'🌫️', drizzle:'🌦️', rain:'🌧️', snow:'❄️', storm:'⛈️' };
-
-  function rnd(v) { const x = Math.sin(v * 99991.17) * 43758.5453; return x - Math.floor(x); }
-  function mode() {
-    if (S.manualMode !== 'auto') return S.manualMode;
-    if (S.weather && typeof S.weather.is_day === 'number') return S.weather.is_day ? 'day' : 'night';
-    const h = new Date().getHours(); return h < 6 || h >= 20 ? 'night' : h < 8 || h >= 18 ? 'dusk' : 'day';
-  }
-  function weatherKind(w) {
-    if (!w) return 'clear'; const c = Number(w.weather_code);
-    if (c === 0) return 'clear'; if (c <= 3) return 'cloud'; if (c <= 48) return 'fog'; if (c <= 57) return 'drizzle'; if (c <= 67 || c <= 82) return 'rain'; if (c <= 86) return 'snow'; return 'storm';
-  }
-  function distance(a,b,c,d) {
-    const R=6371000, r=Math.PI/180, dl=(c-a)*r, dn=(d-b)*r;
-    const x=Math.sin(dl/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(dn/2)**2;
-    return 2*R*Math.asin(Math.sqrt(clamp(x,0,1)));
-  }
-  function seed() { const d=new Date(); return Math.round(S.lat*100)+Math.round(S.lng*100)*17+d.getDate()*31+d.getHours(); }
-  function save() {
-    try { localStorage.setItem(KEY, JSON.stringify({lat:S.lat,lng:S.lng,zoom:map.getZoom(),items:S.items,visited:[...S.visited],manualMode:S.manualMode})); } catch (_) {}
-  }
-  function toast(msg) { const el=$('#toast'); if(!el)return; el.textContent=msg; el.classList.add('show'); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove('show'),2300); }
-  function time() {
-    const m=mode(); $('#shade').className='shade '+m; document.body.dataset.mode=m;
-    $('#toggle').textContent=S.manualMode==='auto'?(m==='night'?'☀':'☾'):S.manualMode==='night'?'☀':'◐';
-  }
-  function weatherText() {
-    if(!S.weather)return 'Unknown skies'; const k=weatherKind(S.weather), t=Number(S.weather.temperature_2m);
-    return (labels[k]||'Unknown')+' · '+(Number.isFinite(t)?Math.round(t)+'°C':'—');
-  }
-
-  function clearSignals() { S.markers.forEach(m=>map.removeLayer(m)); S.markers=[]; }
-
-  function makeSignals() {
-    clearSignals();
-    const k=weatherKind(S.weather), icons=pool[k]||pool.clear, z=map.getZoom(), count=z<10?5:z<13?7:9, base=seed();
-    const candidates=[]; let nearby=0;
-    for(let i=0;i<count;i++){
-      const q=base+i*97, angle=rnd(q)*Math.PI*2;
-      const meters=z>=14 ? 45+rnd(q+7)*430 : z>=12 ? 120+rnd(q+7)*900 : 900+rnd(q+7)*4500;
-      const bearingLat=meters/111320, bearingLng=meters/(111320*Math.max(.35,Math.cos(S.lat*Math.PI/180)));
-      const lat=clamp(S.lat+Math.sin(angle)*bearingLat,-89.9,89.9), lng=S.lng+Math.cos(angle)*bearingLng;
-      const rare=rnd(q+9)>.84, icon=icons[i%icons.length];
-      const id=[lat.toFixed(4),lng.toFixed(4),k,mode(),Math.floor(q)].join(':');
-      const metersAway=distance(S.lat,S.lng,lat,lng); if(metersAway<=CLAIM_RADIUS)nearby++;
-      candidates.push({q,i,lat,lng,id,rare,icon,metersAway});
-    }
-
-    // Screen-space decluttering: reserve the search bar, controls, HUD and Core.
-    const placed=[];
-    const rects=[];
-    const w=map.getContainer().clientWidth, h=map.getContainer().clientHeight;
-    const hud=$('.hud')?.getBoundingClientRect();
-    const top=$('.top')?.getBoundingClientRect();
-    const side=$('.side')?.getBoundingClientRect();
-    const core=map.latLngToContainerPoint([S.lat,S.lng]);
-    const safe=(p,size)=>{
-      const x=p.x-size/2,y=p.y-size/2;
-      if(x<8||y<top.bottom+12||x+size>w-8||y+size>h-8)return false;
-      if(hud && y+size>hud.top-10)return false;
-      if(side && x+size>side.left-10 && y<side.bottom+10)return false;
-      const dx=p.x-core.x,dy=p.y-core.y; if(Math.hypot(dx,dy)<58+size/2)return false;
-      for(const r of rects)if(!(x+size<r.x-7||x>r.x+r.s+7||y+size<r.y-7||y>r.y+r.s+7))return false;
-      rects.push({x,y,s:size}); return true;
-    };
-
-    candidates.sort((a,b)=>(a.metersAway-b.metersAway)||(b.rare-a.rare));
-    for(const c of candidates){
-      const p=map.latLngToContainerPoint([c.lat,c.lng]);
-      const visible=S.scanning || safe(p,36);
-      if(!visible)continue;
-      const html='<button class="radar-signal '+(c.rare?'rare':'')+(S.scanning?' revealed':'')+'" aria-label="'+(c.rare?'Rare ':'')+'discovery"><span class="signal-pulse"></span><b>'+c.icon+'</b></button>';
-      const marker=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html,iconSize:[36,36],iconAnchor:[18,18]}),zIndexOffset:c.rare?1400:1000}).addTo(map);
-      marker.on('click',()=>claim(c)); S.markers.push(marker); placed.push(c);
-    }
-    $('#near').innerHTML=nearby+' <small>✦</small>'; $('#scan').textContent='✦ '+count+' signals';
-  }
-
-  function claim(c){
-    if(S.visited.has(c.id)){toast('Already explored ✦');return;}
-    const d=distance(S.lat,S.lng,c.lat,c.lng);
-    if(d>CLAIM_RADIUS){toast('Move closer · '+Math.round(d)+' m away');return;}
-    S.visited.add(c.id); S.items.unshift({id:c.id,name:names[(c.i+S.items.length)%names.length],icon:c.icon,rare:c.rare,lat:c.lat,lng:c.lng,time:new Date().toISOString(),weather:weatherText(),mode:mode()});
-    save(); updateHud(); makeSignals(); toast((c.rare?'✨ Rare find: ':'✦ Discovery: ')+S.items[0].name);
-  }
-  function updateHud(){
-    const explored=Math.min(100,Math.round(S.visited.size/(S.visited.size+12)*100)); $('#pct').textContent=explored; $('#bar').style.width=explored+'%';
-    $('#disc').textContent='✦ '+S.items.length+' discoveries'; $('#wx').textContent=(weatherIcons[weatherKind(S.weather)]||'☁')+' '+weatherText();
-    $('#quest').textContent=S.items.length<3?'🎯 Find 3 discoveries':S.items.length<10?'🎯 Find 10 discoveries':'🏆 Explorer quest complete';
-  }
-  async function weather(){
-    if(S.weatherBusy)return; S.weatherBusy=true;
-    try{const u='https://api.open-meteo.com/v1/forecast?latitude='+S.lat.toFixed(4)+'&longitude='+S.lng.toFixed(4)+'&current=temperature_2m,weather_code,is_day&timezone=auto'; const r=await fetch(u,{cache:'no-store'}); if(!r.ok)throw 0; const d=await r.json(); if(!d.current)throw 0; S.weather=d.current; time(); updateHud(); makeSignals();}
-    catch(_){$('#wx').textContent='☁ Offline mode';time();makeSignals();}
-    finally{S.weatherBusy=false;}
-  }
-  function scan(){
-    clearTimeout(S.scanTimer); S.scanning=true; makeSignals(); toast('Constellation revealed ✦');
-    S.scanTimer=setTimeout(()=>{S.scanning=false;makeSignals();},4200);
-  }
-  function locate(){
-    if(!navigator.geolocation){toast('Location unavailable');return;} toast('Finding your world…');
-    navigator.geolocation.getCurrentPosition(p=>{S.lat=clamp(p.coords.latitude,-90,90);S.lng=clamp(p.coords.longitude,-180,180);me.setLatLng([S.lat,S.lng]);map.setView([S.lat,S.lng],16,{animate:true});save();weather();requestOrientationPermission();toast(p.coords.accuracy>100?'Core locked · GPS is approximate':'Explorer Core locked on you');},()=>toast('Location permission denied'),{enableHighAccuracy:true,timeout:12000,maximumAge:60000});
-  }
-  async function requestOrientationPermission(){try{if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){if(await DeviceOrientationEvent.requestPermission()!=='granted')return;}}catch(_){return}startHeading();}
-  function startHeading(){if(!window.DeviceOrientationEvent||S.headingListener)return;const fn=e=>{const h=e.webkitCompassHeading??(e.alpha!=null?360-e.alpha:null);if(h==null)return;S.heading=Number(h);$('.core-wrap')?.style.setProperty('--heading',S.heading+'deg')};S.headingListener=fn;window.addEventListener('deviceorientationabsolute',fn,true);window.addEventListener('deviceorientation',fn,true);}
-
-  function renderSheet(tab){
-    $('#sheet').classList.add('open'); $('#title').textContent=tab[0].toUpperCase()+tab.slice(1); const body=$('#body');
-    if(tab==='discover'){body.innerHTML='<div class="hero"><div class="hero-icon">🧭</div><div><h3>The world is a game</h3><p>Scan to reveal a clean constellation of nearby signals. Move within 150 m to claim one.</p></div></div><div class="cards"><button class="card" id="hunt"><div class="big">✦</div><div><b>Scan the area</b><small>Reveal the nearby constellation</small></div></button><div class="card"><div class="big">'+(weatherIcons[weatherKind(S.weather)]||'☁')+'</div><div><b>'+weatherText()+'</b><small>Weather changes the signal pool.</small></div></div></div>';$('#hunt').onclick=()=>{$('#sheet').classList.remove('open');scan()};return;}
-    if(tab==='memories'){body.innerHTML=S.items.length?'<div class="cards">'+S.items.map(x=>'<div class="card"><div class="big">'+x.icon+'</div><div><b>'+x.name+(x.rare?' · ✦ Rare':'')+'</b><small>'+x.weather+' · '+new Date(x.time).toLocaleString()+'</small></div></div>').join('')+'</div>':'<div class="empty"><div class="hero-icon">📸</div><h3>No memories yet</h3><p>Scan the map and claim your first discovery.</p></div>';return;}
-    if(tab==='profile'){body.innerHTML='<div class="hero"><div class="hero-icon">🏆</div><div><h3>Explorer</h3><p>'+S.items.length+' discoveries · '+S.visited.size+' signals claimed</p></div></div><div class="cards"><div class="card"><div class="big">🗺️</div><div><b>'+($('#pct').textContent||0)+'% explored</b><small>Your real-world exploration progress.</small></div></div><div class="card"><div class="big">✦</div><div><b>Keep moving</b><small>New constellations form as your location changes.</small></div></div></div>';return;}
-    body.innerHTML='<div class="hero"><div class="hero-icon">🗺️</div><div><h3>Explorer Core online</h3><p>Pan freely. The world stays anchored to your real position.</p></div></div>';
-  }
-
-  $('#loc').onclick=locate; $('#center').onclick=()=>{map.setView([S.lat,S.lng],Math.max(map.getZoom(),16),{animate:true});me.setLatLng([S.lat,S.lng]);makeSignals()};
-  $('#refresh').onclick=scan; $('#scan').onclick=scan; $('#weather').onclick=weather;
-  $('#toggle').onclick=()=>{S.manualMode=S.manualMode==='auto'?'night':S.manualMode==='night'?'day':'auto';save();time();makeSignals();toast(S.manualMode==='auto'?'Automatic time mode':'Manual '+S.manualMode+' mode')};
-  $('#close').onclick=()=>$('#sheet').classList.remove('open');
-  $$('.nav-btn').forEach(btn=>btn.onclick=()=>{ $$('.nav-btn').forEach(x=>x.classList.remove('active'));btn.classList.add('active'); if(btn.dataset.tab==='map'){$('#sheet').classList.remove('open');return;} renderSheet(btn.dataset.tab); });
-  let searchTimer;
-  $('#search').addEventListener('input',e=>{clearTimeout(searchTimer);const q=e.target.value.trim();if(q.length<3)return;searchTimer=setTimeout(async()=>{if(S.searchController)S.searchController.abort();S.searchController=new AbortController();try{const r=await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q='+encodeURIComponent(q),{signal:S.searchController.signal,headers:{Accept:'application/json'}});const a=await r.json();if(!a[0]){toast('Place not found');return}S.lat=Number(a[0].lat);S.lng=Number(a[0].lon);map.setView([S.lat,S.lng],16,{animate:true});me.setLatLng([S.lat,S.lng]);save();weather();toast('World shifted to '+a[0].display_name.split(',')[0]);}catch(err){if(err.name!=='AbortError')toast('Search unavailable');}},450)});
-  map.on('moveend zoomend',()=>{save();makeSignals()});
-  window.addEventListener('resize',()=>makeSignals());
-  map.whenReady(()=>{time();updateHud();makeSignals();weather();setTimeout(()=>$('#mapLoading')?.classList.add('hidden'),300);});
+  const labels = {clear:'Clear',cloud:'Cloudy',fog:'Misty',drizzle:'Drizzle',rain:'Rainy',snow:'Snowy',storm:'Stormy'};
+  const weatherIcons = {clear:'☀️',cloud:'☁️',fog:'🌫️',drizzle:'🌦️',rain:'🌧️',snow:'❄️',storm:'⛈️'};
+  function rnd(v){const x=Math.sin(v*99991.17)*43758.5453;return x-Math.floor(x)}
+  function mode(){if(S.manualMode!=='auto')return S.manualMode;if(S.weather&&typeof S.weather.is_day==='number')return S.weather.is_day?'day':'night';const h=new Date().getHours();return h<6||h>=20?'night':h<8||h>=18?'dusk':'day'}
+  function weatherKind(w){if(!w)return'clear';const c=Number(w.weather_code);if(c===0)return'clear';if(c<=3)return'cloud';if(c<=48)return'fog';if(c<=57)return'drizzle';if(c<=67||c<=82)return'rain';if(c<=86)return'snow';return'storm'}
+  function distance(a,b,c,d){const R=6371000,r=Math.PI/180,dl=(c-a)*r,dn=(d-b)*r,x=Math.sin(dl/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(clamp(x,0,1)))}
+  function seed(){const d=new Date();return Math.round(S.lat*100)+Math.round(S.lng*100)*17+d.getDate()*31+d.getHours()}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify({lat:S.lat,lng:S.lng,zoom:map.getZoom(),items:S.items,visited:[...S.visited],manualMode:S.manualMode}))}catch(_){} }
+  function toast(msg){const el=$('#toast');if(!el)return;el.textContent=msg;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),2300)}
+  function time(){const m=mode();$('#shade').className='shade '+m;document.body.dataset.mode=m;$('#toggle').textContent=S.manualMode==='auto'?(m==='night'?'☀':'☾'):S.manualMode==='night'?'☀':'◐'}
+  function weatherText(){if(!S.weather)return'Unknown skies';const k=weatherKind(S.weather),t=Number(S.weather.temperature_2m);return(labels[k]||'Unknown')+' · '+(Number.isFinite(t)?Math.round(t)+'°C':'—')}
+  function clearSignals(){S.markers.forEach(m=>map.removeLayer(m));S.markers=[]}
+  function makeSignals(){clearSignals();const k=weatherKind(S.weather),icons=pool[k]||pool.clear,z=map.getZoom(),count=z<10?5:z<13?7:9,base=seed(),candidates=[],nearby=0;for(let i=0;i<count;i++){const q=base+i*97,angle=rnd(q)*Math.PI*2,meters=z>=14?45+rnd(q+7)*430:z>=12?120+rnd(q+7)*900:900+rnd(q+7)*4500,bearingLat=meters/111320,bearingLng=meters/(111320*Math.max(.35,Math.cos(S.lat*Math.PI/180))),lat=clamp(S.lat+Math.sin(angle)*bearingLat,-89.9,89.9),lng=clamp(S.lng+Math.cos(angle)*bearingLng,-180,180),rare=rnd(q+9)>.84,icon=icons[i%icons.length],id=[lat.toFixed(4),lng.toFixed(4),k,mode(),Math.floor(q)].join(':'),metersAway=distance(S.lat,S.lng,lat,lng);if(metersAway<=CLAIM_RADIUS)nearby++;candidates.push({q,i,lat,lng,id,rare,icon,metersAway})}const rects=[],w=map.getContainer().clientWidth,h=map.getContainer().clientHeight,hud=$('.hud')?.getBoundingClientRect(),top=$('.top')?.getBoundingClientRect(),side=$('.side')?.getBoundingClientRect(),core=map.latLngToContainerPoint([S.lat,S.lng]);const safe=(p,size)=>{const x=p.x-size/2,y=p.y-size/2;if(x<8||y<top.bottom+12||x+size>w-8||y+size>h-8)return false;if(hud&&y+size>hud.top-10)return false;if(side&&x+size>side.left-10&&y<side.bottom+10)return false;const dx=p.x-core.x,dy=p.y-core.y;if(Math.hypot(dx,dy)<58+size/2)return false;for(const r of rects)if(!(x+size<r.x-7||x>r.x+r.s+7||y+size<r.y-7||y>r.y+r.s+7))return false;rects.push({x,y,s:size});return true};candidates.sort((a,b)=>(a.metersAway-b.metersAway)||(b.rare-a.rare));for(const c of candidates){const p=map.latLngToContainerPoint([c.lat,c.lng]),visible=S.scanning||safe(p,36);if(!visible)continue;const html='<button class="radar-signal '+(c.rare?'rare':'')+(S.scanning?' revealed':'')+'" aria-label="'+(c.rare?'Rare ':'')+'discovery"><span class="signal-pulse"></span><b>'+c.icon+'</b></button>';const marker=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html,iconSize:[36,36],iconAnchor:[18,18]}),zIndexOffset:c.rare?1400:1000}).addTo(map);marker.on('click',()=>claim(c));S.markers.push(marker)}$('#near').innerHTML=nearby+' <small>✦</small>';$('#scan').textContent='✦ '+count+' signals'}
+  function claim(c){if(S.visited.has(c.id)){toast('Already explored ✦');return}const d=distance(S.lat,S.lng,c.lat,c.lng);if(d>CLAIM_RADIUS){toast('Move closer · '+Math.round(d)+' m away');return}S.visited.add(c.id);S.items.unshift({id:c.id,name:names[(c.i+S.items.length)%names.length],icon:c.icon,rare:c.rare,lat:c.lat,lng:c.lng,time:new Date().toISOString(),weather:weatherText(),mode:mode()});save();updateHud();makeSignals();toast((c.rare?'✨ Rare find: ':'✦ Discovery: ')+S.items[0].name)}
+  function updateHud(){const explored=Math.min(100,Math.round(S.visited.size/(S.visited.size+12)*100));$('#pct').textContent=explored;$('#bar').style.width=explored+'%';$('#disc').textContent='✦ '+S.items.length+' discoveries';$('#wx').textContent=(weatherIcons[weatherKind(S.weather)]||'☁')+' '+weatherText();$('#quest').textContent=S.items.length<3?'🎯 Find 3 discoveries':S.items.length<10?'🎯 Find 10 discoveries':'🏆 Explorer quest complete'}
+  async function weather(){if(S.weatherBusy)return;S.weatherBusy=true;try{const u='https://api.open-meteo.com/v1/forecast?latitude='+S.lat.toFixed(4)+'&longitude='+S.lng.toFixed(4)+'&current=temperature_2m,weather_code,is_day&timezone=auto',r=await fetch(u,{cache:'no-store'});if(!r.ok)throw 0;const d=await r.json();if(!d.current)throw 0;S.weather=d.current;time();updateHud();makeSignals()}catch(_){$('#wx').textContent='☁ Offline mode';time();makeSignals()}finally{S.weatherBusy=false}}
+  function scan(){clearTimeout(S.scanTimer);S.scanning=true;makeSignals();toast('Constellation revealed ✦');S.scanTimer=setTimeout(()=>{S.scanning=false;makeSignals()},4200)}
+  function locate(){if(!navigator.geolocation){toast('Location unavailable');return}toast('Finding your world…');navigator.geolocation.getCurrentPosition(p=>{S.lat=clamp(p.coords.latitude,-90,90);S.lng=clamp(p.coords.longitude,-180,180);me.setLatLng([S.lat,S.lng]);map.setView([S.lat,S.lng],16,{animate:true});save();weather();requestOrientationPermission();toast(p.coords.accuracy>100?'Core locked · GPS is approximate':'Explorer Core locked on you')},()=>toast('Location permission denied'),{enableHighAccuracy:true,timeout:12000,maximumAge:60000})}
+  async function requestOrientationPermission(){try{if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){if(await DeviceOrientationEvent.requestPermission()!=='granted')return}}catch(_){return}startHeading()}
+  function startHeading(){if(!window.DeviceOrientationEvent||S.headingListener)return;const fn=e=>{const h=e.webkitCompassHeading??(e.alpha!=null?360-e.alpha:null);if(h==null)return;S.heading=Number(h);$('.core-wrap')?.style.setProperty('--heading',S.heading+'deg')};S.headingListener=fn;window.addEventListener('deviceorientationabsolute',fn,true);window.addEventListener('deviceorientation',fn,true)}
+  function renderSheet(tab){$('#sheet').classList.add('open');$('#title').textContent=tab[0].toUpperCase()+tab.slice(1);const body=$('#body');if(tab==='discover'){body.innerHTML='<div class="hero"><div class="hero-icon">🧭</div><div><h3>The world is a game</h3><p>Scan to reveal a clean constellation of nearby signals. Move within 150 m to claim one.</p></div></div><div class="cards"><button class="card" id="hunt"><div class="big">✦</div><div><b>Scan the area</b><small>Reveal the nearby constellation</small></div></button><div class="card"><div class="big">'+(weatherIcons[weatherKind(S.weather)]||'☁')+'</div><div><b>'+weatherText()+'</b><small>Weather changes the signal pool.</small></div></div></div>';$('#hunt').onclick=()=>{$('#sheet').classList.remove('open');scan()};return}if(tab==='memories'){body.innerHTML=S.items.length?'<div class="cards">'+S.items.map(x=>'<div class="card"><div class="big">'+x.icon+'</div><div><b>'+x.name+(x.rare?' · ✦ Rare':'')+'</b><small>'+x.weather+' · '+new Date(x.time).toLocaleString()+'</small></div></div>').join('')+'</div>':'<div class="empty"><div class="hero-icon">📸</div><h3>No memories yet</h3><p>Scan the map and claim your first discovery.</p></div>';return}if(tab==='profile'){body.innerHTML='<div class="hero"><div class="hero-icon">🏆</div><div><h3>Explorer</h3><p>'+S.items.length+' discoveries · '+S.visited.size+' signals claimed</p></div></div><div class="cards"><div class="card"><div class="big">🗺️</div><div><b>'+($('#pct').textContent||0)+'% explored</b><small>Your real-world exploration progress.</small></div></div><div class="card"><div class="big">✦</div><div><b>Keep moving</b><small>New constellations form as your location changes.</small></div></div></div>';return}body.innerHTML='<div class="hero"><div class="hero-icon">🗺️</div><div><h3>Explorer Core online</h3><p>Pan freely. The world stays anchored to your real position.</p></div></div>'}
+  $('#loc').onclick=locate;$('#center').onclick=()=>{map.setView([S.lat,S.lng],Math.max(map.getZoom(),16),{animate:true});me.setLatLng([S.lat,S.lng]);makeSignals()};$('#refresh').onclick=scan;$('#scan').onclick=scan;$('#weather').onclick=weather;$('#toggle').onclick=()=>{S.manualMode=S.manualMode==='auto'?'night':S.manualMode==='night'?'day':'auto';save();time();makeSignals();toast(S.manualMode==='auto'?'Automatic time mode':'Manual '+S.manualMode+' mode')};$('#close').onclick=()=>$('#sheet').classList.remove('open');$$('.nav-btn').forEach(btn=>btn.onclick=()=>{$$('.nav-btn').forEach(x=>x.classList.remove('active'));btn.classList.add('active');if(btn.dataset.tab==='map'){$('#sheet').classList.remove('open');return}renderSheet(btn.dataset.tab)});let searchTimer;$('#search').addEventListener('input',e=>{clearTimeout(searchTimer);const q=e.target.value.trim();if(q.length<3)return;searchTimer=setTimeout(async()=>{if(S.searchController)S.searchController.abort();S.searchController=new AbortController();try{const r=await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q='+encodeURIComponent(q),{signal:S.searchController.signal,headers:{Accept:'application/json'}}),a=await r.json();if(!a[0]){toast('Place not found');return}S.lat=Number(a[0].lat);S.lng=Number(a[0].lon);map.setView([S.lat,S.lng],16,{animate:true});me.setLatLng([S.lat,S.lng]);save();weather();toast('World shifted to '+a[0].display_name.split(',')[0])}catch(err){if(err.name!=='AbortError')toast('Search unavailable')}},450)});map.on('moveend zoomend',()=>{save();makeSignals()});window.addEventListener('resize',()=>makeSignals());map.whenReady(()=>{time();updateHud();makeSignals();weather();setTimeout(()=>$('#mapLoading')?.classList.add('hidden'),300)});
 })();
