@@ -1,5 +1,5 @@
-const CACHE = 'world-explorer-v34';
-const CORE = ['/', '/index.html', '/style.css?v=34', '/ui-overrides.css?v=34', '/weather.css?v=34', '/app.js?v=34', '/gps-guard.js?v=34', '/movement-engine.js?v=34', '/mobile-engine.js?v=34', '/radar-visibility.js?v=34', '/hud-toggle.js?v=34', '/signal-polish.js?v=34', '/weather-engine.js?v=34', '/world-events.js?v=34', '/expedition-engine.js?v=34', '/ride-visuals.js?v=34', '/ride-experience.js?v=34', '/manifest.webmanifest', '/vendor/leaflet.js', '/vendor/leaflet.css'];
+const CACHE = 'world-explorer-v35';
+const CORE = ['/', '/index.html', '/style.css?v=35', '/ui-overrides.css?v=35', '/weather.css?v=35', '/app.js?v=35', '/gps-guard.js?v=35', '/movement-engine.js?v=35', '/mobile-engine.js?v=35', '/radar-visibility.js?v=35', '/hud-toggle.js?v=35', '/signal-polish.js?v=35', '/weather-engine.js?v=35', '/world-events.js?v=35', '/expedition-engine.js?v=35', '/ride-visuals.js?v=35', '/ride-experience.js?v=35', '/manifest.webmanifest', '/vendor/leaflet.js', '/vendor/leaflet.css'];
 const NO_CACHE = ['/app.js', '/style.css', '/ui-overrides.css', '/weather.css', '/gps-guard.js', '/movement-engine.js', '/mobile-engine.js', '/radar-visibility.js', '/hud-toggle.js', '/signal-polish.js', '/weather-engine.js', '/world-events.js', '/expedition-engine.js', '/ride-visuals.js', '/ride-experience.js', '/index.html', '/sw.js'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(async cache => {
